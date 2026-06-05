@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Compass & The Fear Desensitiser</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,300;14..32,400;14..32,500;14..32,600;14..32,700&display=swap" rel="stylesheet">
+    
+    <style>
+        /* ========================================= */
+        /* GLOBAL RESET & APP SWITCHER STYLES        */
+        /* ========================================= */
+        body {
+            margin: 0;
+            padding: 0;
+            width: 100%;
+            min-height: 100vh;
+        }
+
+        /* ========================================= */
+        /* COMPASS APP STYLES                        */
+        /* ========================================= */
+        #compass-app {
+            background: linear-gradient(145deg, #fef9e8 0%, #fff7ed 100%);
+            font-family: 'Inter', sans-serif;
+            min-height: 100vh;
+        }
+        .card-hover { transition: all 0.25s ease-in-out; }
+        .card-hover:hover { transform: translateY(-6px); box-shadow: 0 20px 25px -12px rgba(0, 0, 0, 0.15); }
+        .mentor-item { transition: all 0.2s ease; background: white; border-radius: 32px; }
+        .mentor-item:hover { transform: scale(1.01); box-shadow: 0 25px 35px -12px rgba(0, 0, 0, 0.2); border-color: #fbbf24; }
+        .btn-primary { transition: all 0.2s; }
+        .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 8px 18px rgba(245, 158, 11, 0.3); }
+        .major-btn { transition: all 0.2s; }
+        .major-btn.active { background-color: #f59e0b !important; color: white !important; box-shadow: 0 4px 10px rgba(245, 158, 11, 0.4); }
+        .timeline-card { transition: all 0.2s; }
+        .timeline-card:hover { transform: translateY(-4px); border-left-width: 6px; border-left-color: #f59e0b; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background-color: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 1000; visibility: hidden; opacity: 0;
+            transition: visibility 0.2s, opacity 0.2s ease;
+        }
+        .modal-overlay.active { visibility: visible; opacity: 1; }
+        .modal-container {
+            max-width: 480px; width: 90%; background: white; border-radius: 2rem;
+            box-shadow: 0 25px 40px -12px rgba(0,0,0,0.25);
+            transform: scale(0.95); transition: transform 0.2s ease;
+        }
+        .modal-overlay.active .modal-container { transform: scale(1); }
+
+        /* ========================================= */
+        /* GAME APP STYLES                           */
+        /* ========================================= */
+        #game-app {
+            background-color: #121212;
+            font-family: 'Segoe UI', sans-serif;
+            color: #e0e0e0;
+            min-height: 100vh;
+            /* Flex layout applied via JS when active */
+            flex-direction: column; justify-content: center; align-items: center;
+        }
+        #game-container { 
+            background-color: #1e1e1e; border: 4px solid #444; border-radius: 12px; 
+            width: 900px; max-width: 95%; padding: 40px; text-align: center; 
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6); position: relative; 
+            overflow-y: auto; box-sizing: border-box; margin-top: 120px; max-height: 80vh; 
+        }
+        #fail-counter { 
+            position: fixed; top: 25px; right: 30px; background-color: #b71c1c; 
+            color: #fff; padding: 12px 24px; border-radius: 30px; font-size: 1.2rem;
+            font-weight: bold; border: 3px solid #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1000; 
+        }
+        #compass-link { 
+            position: fixed; top: 25px; left: 30px; background-color: #1e1e1e; 
+            color: #e0e0e0; padding: 12px 24px; border-radius: 30px; font-size: 1.2rem;
+            font-weight: bold; border: 3px solid #555; box-shadow: 0 4px 12px rgba(0,0,0,0.5);
+            z-index: 1000; text-decoration: none; transition: 0.2s; cursor: pointer;
+        }
+        #compass-link:hover { background-color: #333; border-color: #888; transform: translateY(-2px); }
+        
+        #scene-img { width: 100%; height: 250px; border-radius: 8px; margin-bottom: 25px; object-fit: cover; display: none; border: 2px solid #555; }
+        #story-text { font-size: 1.3rem; margin-bottom: 30px; min-height: 100px; white-space: pre-wrap; line-height: 1.6; transition: color 0.3s ease; }
+        
+        .text-fail { color: #ef5350; font-weight: bold; } 
+        .text-neutral { color: #42a5f5; font-weight: bold; } 
+        .text-marginal { color: #9ccc65; font-weight: bold; } 
+        
+        #choices-container { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; }
+        .choice-btn { background-color: #333; border: 2px solid #555; border-radius: 6px; padding: 12px 20px; font-size: 1.05rem; cursor: pointer; transition: 0.2s; font-weight: bold; color: #e0e0e0; flex: 1 1 40%; }
+        .choice-btn:hover { background-color: #444; border-color: #888; transform: translateY(-2px); }
+        .bail-btn { background-color: #3e2723; border-color: #ff7043; color: #ffab91; } 
+        .secret-message { color: #ce93d8; font-style: italic; font-weight: bold; font-size: 1.5rem; display: block; margin-bottom: 20px; border-bottom: 2px solid #ce93d8; padding-bottom: 10px; }
+
+	    #color-legend {
+            position: fixed; top: 25px; right: 190px; background-color: #1e1e1e;
+            padding: 15px 20px; border-radius: 10px; border: 2px solid #444;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.5); z-index: 1000; min-width: 160px; 
+        }
+        .legend-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; font-size: 1rem; font-weight: bold; color: #e0e0e0; }
+        .legend-label { display: flex; align-items: center; }
+        .legend-row:last-child { margin-bottom: 0; }
+        .color-box { width: 14px; height: 14px; border-radius: 3px; margin-right: 10px; display: inline-block; }
+        .box-fail { background-color: #ef5350; box-shadow: 0 0 5px #ef5350; }
+        .box-marginal { background-color: #9ccc65; box-shadow: 0 0 5px #9ccc65; }
+        .box-neutral { background-color: #42a5f5; box-shadow: 0 0 5px #42a5f5; }
+        .stat-num { font-size: 1.1rem; margin-left: 20px; }
+        #count-fail { color: #ef5350; } #count-marginal { color: #9ccc65; } #count-neutral { color: #42a5f5; }
+
+        #progress-wrapper {
+            width: 900px; max-width: 95%; background-color: #1e1e1e; border: 3px solid #444;
+            border-radius: 20px; margin-top: 20px; height: 30px; position: relative;
+            overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.5); flex-shrink: 0; 
+        }
+        #progress-fill {
+            height: 100%; width: 0%; 
+            background: linear-gradient(90deg, #2a2a2a, #4a4a4a); transition: width 0.6s ease-out; box-shadow: inset 0 0 10px rgba(0,0,0,0.8); 
+        }
+        #progress-text {
+            position: absolute; top: 0; left: 0; right: 0; bottom: 0;
+            display: flex; align-items: center; justify-content: center;
+            font-weight: bold; font-size: 0.95rem; color: #888; text-shadow: 1px 1px 3px rgba(0,0,0,0.8);
+        }
+
+        /* MOBILE RESPONSIVENESS FOR GAME */
+        @media (max-width: 768px) {
+            #game-app { justify-content: flex-start; padding-top: 15px; padding-bottom: 20px; height: auto; min-height: 100vh; }
+            #fail-counter, #color-legend, #compass-link {
+                position: relative; top: 0; right: 0; left: 0; margin-bottom: 10px;
+                width: 85%; min-width: auto; display: block; text-align: center; box-sizing: border-box;
+            }
+            #color-legend { margin-bottom: 20px; }
+            #game-container { margin-top: 0; padding: 20px; border-width: 2px; max-height: none; }
+            #story-text { font-size: 1.15rem; }
+            .choice-btn { flex: 1 1 100%; padding: 15px; }
+            #progress-wrapper { margin-bottom: 30px; }
+        }
+    </style>
+</head>
+<body>
+
+    <script>
+        const SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbx6FLZwnY9XhbtASANfVP0O7k8dNUmRd4gRbXsuz3KZplvdJHOGNiWFA-_yvnWVPgvk/exec';
+        
+        // --- APP SWITCHER FUNCTION ---
+        function switchApp(appTarget) {
+            if (appTarget === 'game') {
+                document.getElementById('compass-app').style.display = 'none';
+                document.getElementById('game-app').style.display = 'flex'; // Game requires flex
+            } else {
+                document.getElementById('game-app').style.display = 'none';
+                document.getElementById('compass-app').style.display = 'block';
+            }
+            window.scrollTo(0, 0);
+        }
+    </script>
+
+    <div id="compass-app" style="display: block;">
+        <div class="max-w-5xl mx-auto px-5 py-8">
+            <div class="flex justify-between items-center pb-5 mb-6 border-b border-amber-200/70">
+                <div class="flex items-center gap-2 text-2xl font-extrabold">
+                    <i class="fas fa-compass text-amber-600"></i>
+                    <span class="bg-gradient-to-r from-amber-700 to-orange-600 bg-clip-text text-transparent">The Compass</span>
+                </div>
+                <div class="space-x-5 text-sm font-medium">
+                    <a href="#roadmap" class="text-stone-700 hover:text-amber-600 transition">📍 Lộ trình</a>
+                    <a href="#mentors" class="text-stone-700 hover:text-amber-600 transition">🤝 Mentor Hub</a>
+                </div>
+            </div>
+
+            <div class="text-center py-10 md:py-14">
+                <div class="inline-flex items-center gap-2 bg-amber-100 text-amber-800 rounded-full px-4 py-1.5 text-sm mb-5 shadow-sm">
+                    <i class="fas fa-map-pin"></i> Dành cho sinh viên thế hệ mới
+                </div>
+                <h1 class="text-4xl md:text-6xl font-black bg-gradient-to-r from-amber-800 to-orange-600 bg-clip-text text-transparent max-w-3xl mx-auto leading-tight">
+                    Stop Waiting for Internships.<br>Start Your Roadmap Today.
+                </h1>
+                <p class="text-stone-600 max-w-2xl mx-auto mt-5 text-lg">
+                    Bạn KHÔNG lười – bạn chỉ bị ngợp. The Compass biến nỗi sợ thành lộ trình cụ thể và kết nối mentor thực chiến.
+                </p>
+                <div class="flex flex-wrap gap-4 justify-center mt-9">
+                    <a href="#roadmap" class="bg-amber-600 hover:bg-amber-500 text-white px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 shadow-md btn-primary"><i class="fas fa-map"></i> Khám phá lộ trình</a>
+                    
+                    <button onclick="switchApp('game')" class="bg-stone-800 hover:bg-stone-700 text-white px-6 py-3 rounded-2xl font-semibold flex items-center gap-2 shadow-md btn-primary"><i class="fas fa-gamepad"></i> The Fear Desensitiser</button>
+
+                    <a href="#mentors" class="border-2 border-amber-400 bg-white/70 backdrop-blur-sm text-amber-800 hover:bg-amber-50 px-6 py-3 rounded-2xl font-semibold transition"><i class="fas fa-users"></i> Gặp mentor</a>
+                </div>
+            </div>
+
+            <section id="roadmap" class="my-16">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-stone-800"><i class="fas fa-route text-amber-500 mr-2"></i> Bản đồ lộ trình thông minh</h2>
+                    <p class="text-stone-500 mt-1">Chọn ngành – nhận các mốc quan trọng theo từng năm</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-3 mb-8" id="majorButtons">
+                    <button data-major="marketing" class="major-btn active px-5 py-2 rounded-full font-semibold shadow-sm bg-white text-stone-700 border border-amber-300">📈 Marketing</button>
+                    <button data-major="finance" class="major-btn px-5 py-2 rounded-full font-semibold bg-white text-stone-700 border border-stone-300">💰 Tài chính</button>
+                    <button data-major="data" class="major-btn px-5 py-2 rounded-full font-semibold bg-white text-stone-700 border border-stone-300">🤖 Data Science</button>
+                    <button data-major="language" class="major-btn px-5 py-2 rounded-full font-semibold bg-white text-stone-700 border border-stone-300">🌐 Ngôn ngữ</button>
+                </div>
+                <div id="timelineContainer" class="grid md:grid-cols-4 gap-5"></div>
+                <div id="formsContainer" class="max-w-md mx-auto mt-12"></div>
+            </section>
+
+            <section id="mentors" class="my-20">
+                <div class="text-center mb-10">
+                    <h2 class="text-3xl font-bold text-stone-800"><i class="fas fa-handshake text-amber-500 mr-2"></i> Mentor Hub – Kết nối 1-1</h2>
+                    <p class="text-stone-500">Những người đi trước với góc nhìn thực tế, sẵn sàng đồng hành cùng bạn</p>
+                </div>
+                <div id="mentorList" class="space-y-6 max-w-3xl mx-auto"></div>
+            </section>
+
+            <footer class="text-center text-stone-500 text-sm py-8 border-t border-amber-200/50">
+                <i class="fas fa-compass text-amber-400"></i> The Compass – Bắt đầu hành trình của bạn hôm nay.
+            </footer>
+        </div>
+
+        <div id="mentorModal" class="modal-overlay">
+            <div class="modal-container">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-2xl font-bold text-stone-800 flex items-center gap-2"><i class="fas fa-calendar-plus text-amber-500"></i> Đặt lịch tư vấn</h3>
+                        <button id="closeModalBtn" class="text-stone-400 hover:text-stone-600 text-2xl leading-5">&times;</button>
+                    </div>
+                    <p class="text-stone-500 text-sm mb-4">Vui lòng điền thông tin bên dưới, mentor sẽ liên hệ xác nhận lịch trong 1-2 ngày.</p>
+                    <form id="mentorBookingForm">
+                        <input type="hidden" id="mentorNameField" value="">
+                        <input type="hidden" id="mentorFieldField" value="">
+                        <div class="mb-3">
+                            <label class="block text-stone-700 font-medium mb-1">Họ và tên</label>
+                            <input type="text" id="studentName" required class="w-full border border-stone-300 rounded-xl p-3 focus:ring-2 focus:ring-amber-300">
+                        </div>
+                        <div class="mb-3">
+                            <label class="block text-stone-700 font-medium mb-1">Email sinh viên</label>
+                            <input type="email" id="studentEmail" required class="w-full border border-stone-300 rounded-xl p-3 focus:ring-2 focus:ring-amber-300">
+                        </div>
+                        <div class="mb-5">
+                            <label class="block text-stone-700 font-medium mb-1">Bạn muốn hỏi mentor điều gì?</label>
+                            <textarea id="bookingQuestion" rows="3" class="w-full border border-stone-300 rounded-xl p-3 focus:ring-2 focus:ring-amber-300" placeholder="Ví dụ: Làm sao để có thực tập sớm? Kỹ năng cần trau dồi?"></textarea>
+                        </div>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl transition shadow-md">Gửi yêu cầu</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div id="game-app" style="display: none;">
+        
+        <button id="compass-link" onclick="switchApp('compass')">← The Compass</button>
+        
+        <div id="fail-counter">Retries: 0</div>
+
+        <div id="color-legend">
+            <div class="legend-row">
+                <div class="legend-label"><span class="color-box box-fail"></span> Bad </div>
+                <span id="count-fail" class="stat-num">0</span>
+            </div>
+            <div class="legend-row">
+                <div class="legend-label"><span class="color-box box-marginal"></span> “Good” </div>
+                <span id="count-marginal" class="stat-num">0</span>
+            </div>
+            <div class="legend-row">
+                <div class="legend-label"><span class="color-box box-neutral"></span> Neutral </div>
+                <span id="count-neutral" class="stat-num">0</span>
+            </div>
+        </div>
+
+        <div id="game-container">
+            <img id="scene-img" src="" alt="Scene Image">
+            <div id="story-text">Loading...</div>
+            <div id="choices-container"></div>
+        </div> 
+        
+        <div id="progress-wrapper">
+            <div id="progress-fill"></div>
+            <div id="progress-text">0 Paths Walked</div>
+        </div>
+    </div>
+
+    <script>
+        // --- COMPASS LOGIC ---
+        const roadmaps = {
+            marketing: { name: "Marketing", timeline: [ { year: "Năm 1", items: ["Tham gia CLB truyền thông", "Kỹ năng thuyết trình", "Nguyên lý Marketing"] }, { year: "Năm 2", items: ["Google Analytics", "SEO cơ bản", "Chứng chỉ Facebook Blueprint"] }, { year: "Năm 3", items: ["Thực tập Marketing", "Case study thực tế", "Chạy chiến dịch nhỏ"] }, { year: "Năm 4", items: ["Portfolio", "Apply Fresher/MT", "Networking alumni"] } ] },
+            finance: { name: "Tài chính / Ngân hàng", timeline: [ { year: "Năm 1", items: ["Excel nâng cao", "Phân tích BCTC", "Case competition"] }, { year: "Năm 2", items: ["Dự báo tài chính", "Bloomberg cơ bản", "CFA level 1 dự kiến"] }, { year: "Năm 3", items: ["Thực tập ngân hàng/CTCK", "Mô hình DCF", "Làm việc số liệu lớn"] }, { year: "Năm 4", items: ["CV chuyên phân tích", "Phỏng vấn tài chính", "Thương hiệu cá nhân"] } ] },
+            data: { name: "Data Science / AI", timeline: [ { year: "Năm 1", items: ["Python & SQL", "Thống kê xác suất", "CLB Data"] }, { year: "Năm 2", items: ["Pandas/Numpy", "Power BI/Tableau", "Kaggle cơ bản"] }, { year: "Năm 3", items: ["Thực tập Data Analyst", "Portfolio project", "Machine Learning"] }, { year: "Năm 4", items: ["GitHub hoàn chỉnh", "Apply Data Scientist", "Hackathon"] } ] },
+            language: { name: "Ngôn ngữ (Biên phiên dịch / Ngôn ngữ Anh)", timeline: [ { year: "Năm 1", items: ["Nền tảng ngữ pháp, từ vựng chuyên sâu", "Luyện nghe - nói phản xạ", "Khám phá văn hóa các nước"] }, { year: "Năm 2", items: ["Kỹ năng viết học thuật", "Dịch thuật cơ bản", "Chứng chỉ IELTS/TOEIC 7.0+"] }, { year: "Năm 3", items: ["Thực tập công ty đa quốc gia", "Phiên dịch hội thảo", "Soạn thảo văn bản song ngữ"] }, { year: "Năm 4", items: ["Hoàn thiện hồ sơ", "Apply biên/phiên dịch", "Định hướng quốc tế"] } ] }
+        };
+
+        const mentors = [
+            { name: "Minh Anh", role: "Senior Marketing Manager", company: "GroupM", field: "Marketing", avatar: "📊", bio: [ "✨ 8 năm kinh nghiệm trong chiến lược thương hiệu & truyền thông tích hợp.", "🎯 Từng dẫn dắt chiến dịch cho Unilever, Nestlé, đạt giải thưởng MMA.", "💡 Sẵn sàng chia sẻ bí kíp để bạn săn được học bổng và thực tập ngay từ năm 2." ] },
+            { name: "Hoài Linh", role: "Financial Analyst", company: "VPBank", field: "Tài chính", avatar: "💰", bio: [ "📈 CFA Level 2, chuyên phân tích đầu tư và quản trị rủi ro.", "🏦 5 năm trong lĩnh vực ngân hàng đầu tư, từng hỗ trợ 10+ dự án M&A.", "🔎 Mentor giúp bạn xây dựng lộ trình chinh phục chứng chỉ tài chính quốc tế." ] },
+            { name: "Bảo Long", role: "Data Scientist", company: "FPT AI", field: "Data Science", avatar: "🤖", bio: [ "🧠 Chuyên gia Machine Learning, từng triển khai giải pháp NLP cho tập đoàn lớn.", "📊 Đồng thời là giảng viên tại trung tâm đào tạo AI cấp tốc.", "🚀 Hỗ trợ sinh viên xây dựng portfolio Kaggle và phỏng vấn Data Fresher." ] },
+            { name: "Mỹ Duyên", role: "Chuyên gia Biên phiên dịch", company: "Đại sứ quán Anh", field: "Ngôn ngữ", avatar: "🌐", bio: [ "🎓 Thạc sĩ Biên phiên dịch (University of Leeds), 7 năm kinh nghiệm thực chiến.", "📝 Đã tham gia phiên dịch cho hội nghị thượng đỉnh cấp nhà nước và doanh nghiệp.", "🗣️ Đồng hành cùng sinh viên lộ trình lấy chứng chỉ IELTS 8.0 và kỹ năng dịch thuật chuyên nghiệp." ] }
+        ];
+
+        async function sendToGoogleScript(data, type) {
+            try {
+                await fetch(SCRIPT_URL, { method: 'POST', mode: 'no-cors', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams({ ...data, type, timestamp: new Date().toISOString() }) });
+                return true;
+            } catch (err) {
+                console.error(err); alert("❌ Có lỗi kết nối, vui lòng thử lại."); return false;
+            }
+        }
+
+        function attachFormHandler(formEl, majorName) {
+            formEl.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const name = formEl.querySelector('input[name="name"]').value.trim();
+                const email = formEl.querySelector('input[name="email"]').value.trim();
+                if (!name || !email) { alert("Vui lòng nhập đủ họ tên và email."); return; }
+                const ok = await sendToGoogleScript({ name, email, major: majorName }, 'roadmap_request');
+                if (ok) { alert("✅ Đã ghi nhận! Hãy kiểm tra email (cả spam) để nhận lộ trình."); formEl.reset(); }
+            });
+        }
+
+        function renderTimeline(majorKey) {
+            const data = roadmaps[majorKey];
+            if (!data) return;
+            const container = document.getElementById('timelineContainer');
+            container.innerHTML = data.timeline.map(phase => `
+                <div class="bg-white/90 backdrop-blur-sm border border-amber-200 rounded-2xl p-5 shadow-sm timeline-card">
+                    <div class="flex items-center gap-2 text-amber-600 font-bold mb-3"><i class="fas fa-calendar-alt"></i> ${phase.year}</div>
+                    <ul class="space-y-2 text-stone-700 text-sm">${phase.items.map(item => `<li class="flex gap-2"><i class="fas fa-check-circle text-emerald-500 mt-0.5"></i> ${item}</li>`).join('')}</ul>
+                </div>
+            `).join('');
+        }
+
+        function showFormForMajor(majorKey) {
+            const majorData = roadmaps[majorKey];
+            const container = document.getElementById('formsContainer');
+            container.innerHTML = `
+                <div class="bg-white rounded-2xl p-6 shadow-md border border-amber-100">
+                    <h3 class="text-xl font-bold text-stone-800 mb-2"><i class="fas fa-gift text-amber-500"></i> Nhận lộ trình ${majorData.name}</h3>
+                    <p class="text-stone-500 text-sm mb-4">Để lại email, chúng tôi sẽ gửi tài liệu PDF kèm lộ trình ngay.</p>
+                    <form id="dynamicRoadmapForm">
+                        <input type="text" name="name" placeholder="Họ và tên" class="w-full border border-stone-300 rounded-xl p-3 mb-3 focus:ring-2 focus:ring-amber-300" required>
+                        <input type="email" name="email" placeholder="Email sinh viên" class="w-full border border-stone-300 rounded-xl p-3 mb-4 focus:ring-2 focus:ring-amber-300" required>
+                        <button type="submit" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-semibold py-3 rounded-xl transition shadow-md">📥 Gửi & nhận roadmap</button>
+                    </form>
+                </div>
+            `;
+            attachFormHandler(document.getElementById('dynamicRoadmapForm'), majorData.name);
+        }
+
+        function switchMajor(majorKey) {
+            document.querySelectorAll('.major-btn').forEach(btn => {
+                if (btn.dataset.major === majorKey) btn.classList.add('active'); else btn.classList.remove('active');
+            });
+            renderTimeline(majorKey); showFormForMajor(majorKey);
+        }
+
+        document.querySelectorAll('.major-btn').forEach(btn => { btn.addEventListener('click', () => switchMajor(btn.dataset.major)); });
+
+        function renderMentorList() {
+            const container = document.getElementById('mentorList');
+            container.innerHTML = mentors.map(mentor => `
+                <div class="mentor-item flex flex-col sm:flex-row gap-5 p-5 border border-amber-200 shadow-sm rounded-3xl bg-white/90">
+                    <div class="flex-shrink-0 flex items-center justify-center w-24 h-24 sm:w-28 sm:h-28 rounded-full bg-gradient-to-br from-amber-400 to-orange-500 text-4xl shadow-md"><span>${mentor.avatar}</span></div>
+                    <div class="flex-1">
+                        <div class="flex flex-wrap justify-between items-start gap-2">
+                            <div><h3 class="text-xl font-bold text-stone-800">${mentor.name}</h3><p class="text-amber-600 font-medium">${mentor.role} @ ${mentor.company}</p></div>
+                            <span class="bg-amber-100 text-amber-800 px-3 py-1 rounded-full text-xs font-semibold">${mentor.field}</span>
+                        </div>
+                        <div class="mt-3 space-y-1 text-stone-600 text-sm">
+                            ${mentor.bio.map(line => `<p class="flex items-start gap-2"><i class="fas fa-star text-amber-400 text-xs mt-1"></i> ${line}</p>`).join('')}
+                        </div>
+                        <div class="mt-4"><button onclick="openMentorModal('${mentor.name}', '${mentor.field}')" class="bg-white border-2 border-amber-400 text-amber-700 hover:bg-amber-50 px-5 py-2 rounded-full font-medium transition shadow-sm flex items-center gap-2"><i class="fas fa-calendar-check"></i> Đặt lịch 1-1</button></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        const modal = document.getElementById('mentorModal');
+        const closeBtn = document.getElementById('closeModalBtn');
+        const bookingForm = document.getElementById('mentorBookingForm');
+
+        window.openMentorModal = (mentorName, mentorField) => {
+            document.getElementById('mentorNameField').value = mentorName; document.getElementById('mentorFieldField').value = mentorField;
+            document.getElementById('studentName').value = ''; document.getElementById('studentEmail').value = ''; document.getElementById('bookingQuestion').value = '';
+            modal.classList.add('active');
+        };
+
+        function closeModal() { modal.classList.remove('active'); }
+        closeBtn.addEventListener('click', closeModal);
+        modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+
+        bookingForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const mentorName = document.getElementById('mentorNameField').value; const mentorField = document.getElementById('mentorFieldField').value;
+            const studentName = document.getElementById('studentName').value.trim(); const studentEmail = document.getElementById('studentEmail').value.trim();
+            const question = document.getElementById('bookingQuestion').value.trim();
+            if (!studentName || !studentEmail) { alert("Vui lòng nhập họ tên và email."); return; }
+            const success = await sendToGoogleScript({ studentName, studentEmail, question, mentorName, mentorField }, 'mentor_booking');
+            if (success) { alert("✅ Yêu cầu kết nối đã gửi! Kiểm tra email xác nhận (cả spam)."); closeModal(); }
+        });
+
+        renderMentorList(); switchMajor('marketing');
+
+
+        // --- GAME LOGIC ---
+        let fails = 0; let uniqueFails = 0; let uniqueMarginals = 0; let uniqueNeutrals = 0;
+        const visitedScenes = new Set();
+        
+        const failCounterElement = document.getElementById('fail-counter');
+        const storyTextElement = document.getElementById('story-text');
+        const choicesContainer = document.getElementById('choices-container');
+        const sceneImgElement = document.getElementById('scene-img');
+        const countFailEl = document.getElementById('count-fail');
+        const countMarginalEl = document.getElementById('count-marginal');
+        const countNeutralEl = document.getElementById('count-neutral');
+        const progressFillEl = document.getElementById('progress-fill');
+        const progressTextEl = document.getElementById('progress-text');
+
+        const story = {
+            start: { text: "Well done, you’ve survived through the first 18 years of your life and has now entered college. Which path will you take?", imageSrc: "", state: "normal", choices: [ { text: "Economics", nextScene: "econ1" }, { text: "English Major", nextScene: "lange1" }, { text: "Computer Science", nextScene: "tech1" }, { text: "Look beyond the paths that lays before you...", nextScene: "secret1", requiredFails: 5 } ] },
+            secret1: { text: "People often focus on the fears of the risks that come with their decisions, rather than the joys that they could have attained had they walked down that path. This is the same for a student's career awareness, they have shown that the thought of a wrong choice scares them deeply enough for even a tiny step of theirs to reach outside of their comfort zone and into the danger that is their future careers. However, there was never actually a wrong choice, only the ones that are made and the people who dare move forward along with the decisions they have made, right or wrong alike.", imageSrc: "", state: "marginal", choices: [ { text: "I wish to walk my path.", nextScene: "secret2", isBail: true }, { text: "I do not yet wish to walk this path.", nextScene: "start", isBail: true } ] },
+            secret2: { text: "May you succeed.", imageSrc: "", state: "fail", choices: [ { text: "I shall try.", nextScene: "start", isHardReset: true, isBail: true } ] },
+            econ1: { text: "Into money are you? You decided you wanted to understand the fundamental flow of money. You graduate with a firm grasp of supply and demand, but absolutely zero actual capital.", imageSrc: "", state: "normal", choices: [ { text: "Apply for a job", nextScene: "econ2" }, { text: "Try to apply advanced theories to real life", nextScene: "econ3" }, { text: "Immediately try entrepreneurship because every rich person you see on the internet has that tag in their TikToks", nextScene: "econ4" }, { text: "You realized this is one of the majors that often requires a Master's degree just to fetch coffee for a Senior Analyst", nextScene: "start", isBail: true } ] },
+            econ2: { text: "You get hired as a junior analyst. You spend 40 hours a week calculating the price elasticity of demand for the company's breakroom coffee. Tired, you quit the job. But at least you got some experience.", imageSrc: "", state: "neutral", choices: [ { text: "Try to apply advanced theories to real life", nextScene: "econ3" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            econ3: { text: "You successfully use the Leontief Input-Output model to organize your grocery shopping, but realize it takes longer to calculate than to just buy the food without looking at your wallet because you studied economics and already have a lot of money, right?", imageSrc: "", state: "marginal", choices: [ { text: "Apply for a job (again)", nextScene: "econ6" }, { text: "Try trading stocks because all the “cool” guys say it’s cool", nextScene: "econ7" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            econ4: { text: "You were absolutely certain that you wouldn’t fail. And you were right!...Because you never had the funds to do a startup in the first place.", imageSrc: "", state: "neutral", choices: [ { text: "You ask your parents to fund your startup", nextScene: "econ5" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            econ5: { text: "They answered no, duh. Who do you think this story is about? Not secret would-be billionaires that’s for sure.", imageSrc: "", state: "fail", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            econ6: { text: "Armed with advanced theoretical knowledge, you bring up the Keynesian Cross during an interview for a bank teller position. They ask if that's a religious symbol. You are escorted out.", imageSrc: "", state: "fail", choices: [ { text: "Retreat into academia", nextScene: "econ8" }, { text: "Look up the statistics", nextScene: "econ9" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            econ7: { text: "All the money ($4.19) you gathered up in your two jobs to fund your startup you’ve always hoped to do at the start was blown away in mere minutes.", imageSrc: "", state: "fail", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            econ8: { text: "Frustrated by the corporate world, you decide to write an extensive case study analyzing the economic impact of tobacco tariffs and taxes. You spend months collecting data, only to realize nobody reads academic papers except other broke academics or college students who are forced to learn the topic.", imageSrc: "", state: "fail", choices: [ { text: "Go deeper", nextScene: "econ10" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            econ9: { text: "You decided to put your research skills to use and look up the graduate unemployment rates for economics majors. This will surely help you strategize!", imageSrc: "", state: "marginal", choices: [ { text: "Apply for a job (again) (again)", nextScene: "econ11" }, { text: "Try to predict the stock market", nextScene: "econ12" } ] },
+            econ10: { text: "You kept at it with your academia and listened to some guy in class talk about the 2008 US economic crisis, and the relationship between gold and the Wizard of Oz. You had a moment of realization thanks to this!", imageSrc: "", state: "marginal", choices: [ { text: "Apply for a job (again) (again)", nextScene: "econ11" }, { text: "Try to predict the stock market", nextScene: "econ12" } ] },
+            econ11: { text: "You confidently apply for an economic advisor role at a government agency. However, they tell you the position is unpaid for the first five years to “balance the budget,” and you get kicked out of the building for asking for a living wage.", imageSrc: "", state: "fail", choices: [ { text: "Apply for a job (again) (again) you get the idea.", nextScene: "econ13" }, { text: "“Who said this was a free market!” - You yelled at a line graph.", nextScene: "start", isBail: true } ] },
+            econ12: { text: "You thought you could use microeconomic theory to day-trade your way out of unemployment, but was just deceived by numerous crypto scams and lost your house (the homeless shelter).", imageSrc: "", state: "fail", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            econ13: { text: "You were able to get into an average paying job at an insurance firm where you just click “approve” on spreadsheets all day.", imageSrc: "", state: "neutral", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            lange1: { text: "Pretty generic, you graduated with a GPA that is exactly the average of every single person that has ever gone to college. You spent four years analyzing classic literature and now possess a highly sophisticated vocabulary that absolutely nobody uses in real life.", imageSrc: "", state: "normal", choices: [ { text: "Apply for a job", nextScene: "lange2" }, { text: "Try to learn another language", nextScene: "lange3" }, { text: "You realized this is one of the majors with the higher unemployment rates and often leads to average paying jobs (Go back to square one)", nextScene: "start", isBail: true } ] },
+            lange2: { text: "You were surprisingly able to get hired as a content writer for a mid-level marketing firm. You spend your days writing SEO-optimized blog posts about “Top 10 Office Workplaces” utilizing exactly 0% of your critical theory background. But you can’t just let it end there.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn another language", nextScene: "lange3" }, { text: "Bail out", nextScene: "start", isBail: true } ] },
+            lange3: { text: "You successfully learned another language but could only do those written in Latin characters because you got too used to English.", imageSrc: "", state: "marginal", choices: [ { text: "Apply for a job", nextScene: "lange4" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            lange4: { text: "With two languages at your disposal, you tower over other candidates and successfully get hired for the job … where your only daily task is replying to emails in standard English. Your bilingualism is exclusively used to impress foreigners that happen to ask you for directions.", imageSrc: "", state: "fail", choices: [ { text: "Try to find another job", nextScene: "lange5" }, { text: "Try to learn another language", nextScene: "lange6" } ] },
+            lange5: { text: "Frustrated, you decided to find a job that uses both of the languages you’ve learned but to no avail since business negotiations don't usually need sudden shifts between languages, it just sounds awkward.", imageSrc: "", state: "fail", choices: [ { text: "Try to learn another language", nextScene: "lange6" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            lange6: { text: "Wow! You actually managed to learn another language. This will surely boost your job prospects! Hopefully...", imageSrc: "", state: "marginal", choices: [ { text: "Apply for a better job", nextScene: "lange7" }, { text: "Try to learn another language", nextScene: "lange8" } ] },
+            lange7: { text: "You confidently applied for the position of translator at a big firm. However, all the other candidates have “Mastered 14 other languages” on their CV and you get kicked out of the building because they thought you were playing a prank.", imageSrc: "", state: "fail", choices: [ { text: "Apply for a job", nextScene: "lange9" }, { text: "“Học cái này để làm cái gì hả trời!” - You yelled at the wall.", nextScene: "start", isBail: true } ] },
+            lange8: { text: "You thought you could learn another language but just spiralled down a rabbit hole about how to learn more languages effectively.", imageSrc: "", state: "fail", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            lange9: { text: "You settle for an average-paying administrative role where your deep understanding of grammar structures is exclusively used to fix your boss's typos in his PowerPoint presentations.", imageSrc: "", state: "neutral", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            tech1: { text: "Bit of a smartie, eh? You sacrificed your eyesight and your sleep schedule to learn how to speak to machines. You graduate with 20 unsaved python files still open and a severe caffeine addiction.", imageSrc: "", state: "normal", choices: [ { text: "Apply for a job", nextScene: "tech2" }, { text: "Try to learn a new coding language", nextScene: "tech3" }, { text: "You realized this is a major where your entire skillset can currently be replicated by a free chatbot in about 15 seconds, which may or may not be used by other college students to get a free degree (Go back to square one)", nextScene: "start", isBail: true } ] },
+            tech2: { text: "You were surprisingly able to get a job as a Junior Developer. Your main responsibility is changing button colors and fixing code written by a guy who left in 2010. You know you can do better.", imageSrc: "", state: "neutral", choices: [ { text: "Suggest a change in the way a Senior Developer writes their code because it was obvious to anyone that he/she doesn't actually know how to code", nextScene: "tech4" }, { text: "Try to learn a new coding language", nextScene: "tech3" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech3: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 256 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Apply for a job (again)", nextScene: "tech5" }, { text: "Sit and rest for a few minutes", nextScene: "tech6" }, { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech4: { text: "Instantly get fired for disobeying a Senior Developer.", imageSrc: "", state: "fail", choices: [ { text: "Try to learn a new coding language", nextScene: "tech3" }, { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            tech5: { text: "With multiple frameworks under your belt, you dominate other candidates in the screening interviews is headed straight for an entry-level role... which requires 10 years of experience in a coding language that was invented 3 years ago.", imageSrc: "", state: "fail", choices: [ { text: "Try to become an indie dev", nextScene: "tech7" }, { text: "Research the job market", nextScene: "tech8" }, { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech6: { text: "You sat down and rest, reminiscing about the time where you had 8 hours of sleep. This completely recharged you but also immediately placed you 5 years behind your rival job candidates in terms of technological progress.", imageSrc: "", state: "marginal", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            tech7: { text: "Frustrated, you decide to build your own revolutionary app. You genuinely found joy in what you do for a short but blissful period of time, designing a game for 6 months that only 4 people play for less than two weeks, 3 of whom are your other Computer Science friends.", imageSrc: "", state: "marginal", choices: [ { text: "“Well...better get back to it.” - You said as you chug down another can of energy drinks and limp back to your computer", nextScene: "tech8" }, { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech8: { text: "You managed to compile a database of technology graduate unemployment rates. You find out the market is completely saturated! This will surely boost your anxiety!", imageSrc: "", state: "fail", choices: [ { text: "Try to apply for a better job (again) (again)", nextScene: "tech9" }, { text: "Try to build a startup", nextScene: "tech10" }, { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech9: { text: "You confidently applied for the position of Lead Systems Architect at a big tech firm. However, the other candidates are all highly advanced AI models, and you are asked to leave because your code is not a carbon copy of theirs.", imageSrc: "", state: "fail", choices: [ { text: "Desperately search for another job", nextScene: "tech11" }, { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech10: { text: "You thought you could make a name for yourself in the industry, but all you did was marvel at the ingenious ideas of others you will never actually code.", imageSrc: "", state: "fail", choices: [ { text: "Desperately search for another job", nextScene: "tech11" }, { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech11: { text: "You were able to get into an average paying job doing IT support where you just ask people “Have you tried turning it off and on again?” all day.", imageSrc: "", state: "neutral", choices: [ { text: "Try to learn a new coding language", nextScene: "tech12" }, { text: "Back to square one", nextScene: "start", isBail: true } ] },
+            tech12: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 255 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn a new coding language", nextScene: "tech13" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech13: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 250 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn a new coding language", nextScene: "tech14" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech14: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 200 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn a new coding language", nextScene: "tech15" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech15: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 150 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn a new coding language", nextScene: "tech16" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech16: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 100 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn a new coding language", nextScene: "tech17" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech17: { text: "You successfully learned the hottest new coding language. Unfortunately, it became completely obsolete about 50 lines of code into your new project and now you need to rewrite the whole thing.", imageSrc: "", state: "marginal", choices: [ { text: "Try to learn a new coding language", nextScene: "tech18" }, { text: "Bail Out", nextScene: "start", isBail: true } ] },
+            tech18: { text: "You successfully learned all the coding languages there is to learn, you should be proud of yourself for such an achievement, yet all you feel is a sense of dread looming over you, for another coding language far more powerful and assiduous to learn is soon to be born.", imageSrc: "", state: "fail", choices: [ { text: "Back to square one", nextScene: "start", isBail: true } ] }
+        };
+
+        function loadScene(sceneName) {
+            const scene = story[sceneName];
+            storyTextElement.className = ''; 
+
+            if (scene.imageSrc && scene.imageSrc.trim() !== "") {
+                sceneImgElement.src = scene.imageSrc; sceneImgElement.style.display = "block"; 
+            } else { sceneImgElement.style.display = "none"; }
+
+            if (scene.state === "fail") storyTextElement.classList.add('text-fail');
+            if (scene.state === "neutral") storyTextElement.classList.add('text-neutral');
+            if (scene.state === "marginal") storyTextElement.classList.add('text-marginal');
+
+            if (sceneName !== 'start' && !visitedScenes.has(sceneName)) {
+                visitedScenes.add(sceneName); 
+                if (scene.state === "fail") { uniqueFails++; countFailEl.innerText = uniqueFails; }
+                else if (scene.state === "marginal") { uniqueMarginals++; countMarginalEl.innerText = uniqueMarginals; }
+                else if (scene.state === "neutral") { uniqueNeutrals++; countNeutralEl.innerText = uniqueNeutrals; }
+
+                const totalScenes = Object.keys(story).length - 1; 
+                const percent = Math.floor((visitedScenes.size / totalScenes) * 100);
+                progressFillEl.style.width = percent + "%";
+                progressTextEl.innerText = `${visitedScenes.size} Paths Walked`;
+            }
+
+            let displayText = scene.text;
+            if (sceneName === 'start' && fails >= 3) {
+                displayText = "<span class='secret-message'>Despite all that has happened, you're still here.                                            Keep going and perhaps you may find your path.</span>\n\n" + scene.text;
+            }
+
+            storyTextElement.innerHTML = displayText;
+            choicesContainer.innerHTML = '';
+
+            scene.choices.forEach(choice => {
+                if (choice.requiredFails && fails < choice.requiredFails) return; 
+
+                const button = document.createElement('button');
+                button.innerText = choice.text;
+                button.classList.add('choice-btn');
+                
+                if (choice.isBail || choice.isHardReset) button.classList.add('bail-btn');
+
+                if (choice.requiredFails) {
+                    button.style.borderColor = "#ce93d8"; button.style.color = "#ce93d8"; button.style.backgroundColor = "#2a1b2e"; 
+                }
+
+                button.addEventListener('click', () => {
+                    if (choice.isHardReset) {
+                        fails = 0; failCounterElement.innerText = `Retries: ${fails}`;
+                        visitedScenes.clear(); uniqueFails = 0; uniqueMarginals = 0; uniqueNeutrals = 0;
+                        countFailEl.innerText = "0"; countMarginalEl.innerText = "0"; countNeutralEl.innerText = "0";
+                        progressFillEl.style.width = "0%"; progressTextEl.innerText = "0 Paths Walked";
+                    } 
+                    else if (choice.isBail) {
+                        fails++; failCounterElement.innerText = `Retries: ${fails}`;
+                    }
+                    loadScene(choice.nextScene);
+                });
+
+                choicesContainer.appendChild(button);
+            });
+        }	
+        loadScene('start');
+    </script>
+</body>
+</html>
